@@ -325,5 +325,107 @@ upcoming.forEach(x=>addRace(x.r,x.start,x.end))
 
 }
 
+/* DRIVER STANDINGS */
+
+async function loadDriverStandings(){
+
+const res=await fetch("https://api.jolpi.ca/ergast/f1/current/driverStandings.json")
+const data=await res.json()
+
+const standings=data.MRData.StandingsTable.StandingsLists[0].DriverStandings
+
+const container=document.querySelector("#drivers .card")
+
+let html=`
+
+<h3>Driver Standings</h3>
+
+<table class="standings-table">
+
+<thead>
+<tr>
+<th class="pos-col">POS</th>
+<th class="driver-col">DRIVER</th>
+<th class="team-col">TEAM</th>
+<th class="points-col">PTS</th>
+</tr>
+</thead>
+
+<tbody>
+
+`
+
+standings.forEach((d,i)=>{
+
+html+=`
+
+<tr>
+<td class="pos-col">${i+1}</td>
+<td class="driver-col">${d.Driver.givenName} ${d.Driver.familyName}</td>
+<td class="team-col">${d.Constructors[0].name}</td>
+<td class="points-col">${d.points}</td>
+</tr>
+
+`
+
+})
+
+html+=`</tbody></table>`
+
+container.innerHTML=html
+
+}
+
+/* CONSTRUCTOR STANDINGS */
+
+async function loadConstructorStandings(){
+
+const res=await fetch("https://api.jolpi.ca/ergast/f1/current/constructorStandings.json")
+const data=await res.json()
+
+const standings=data.MRData.StandingsTable.StandingsLists[0].ConstructorStandings
+
+const container=document.querySelector("#teams .card")
+
+let html=`
+
+<h3>Constructor Standings</h3>
+
+<table class="standings-table">
+
+<thead>
+<tr>
+<th class="pos-col">POS</th>
+<th class="team-col">TEAM</th>
+<th class="points-col">PTS</th>
+</tr>
+</thead>
+
+<tbody>
+
+`
+
+standings.forEach((t,i)=>{
+
+html+=`
+
+<tr>
+<td class="pos-col">${i+1}</td>
+<td class="team-col">${t.Constructor.name}</td>
+<td class="points-col">${t.points}</td>
+</tr>
+
+`
+
+})
+
+html+=`</tbody></table>`
+
+container.innerHTML=html
+
+}
+
 loadRaceData()
 loadCalendar()
+loadDriverStandings()
+loadConstructorStandings()
