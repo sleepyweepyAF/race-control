@@ -263,6 +263,79 @@ font-weight:bold;
 
 }
 
+/* STANDINGS TABLE */
+
+.standings-table{
+
+width:100%;
+border-collapse:collapse;
+table-layout:fixed;
+margin-top:10px;
+
+}
+
+.standings-table th{
+
+text-align:left;
+padding:8px 6px;
+font-size:12px;
+color:#aaa;
+border-bottom:1px solid #333;
+letter-spacing:1px;
+
+}
+
+.standings-table td{
+
+padding:10px 6px;
+border-bottom:1px solid #222;
+font-size:14px;
+
+}
+
+.standings-table tr:hover{
+
+background:#151515;
+
+}
+
+/* POS */
+
+.pos-col{
+
+width:60px;
+color:#e10600;
+font-weight:bold;
+
+}
+
+/* DRIVER */
+
+.driver-col{
+
+width:40%;
+
+}
+
+/* TEAM */
+
+.team-col{
+
+width:35%;
+color:#aaa;
+
+}
+
+/* POINTS */
+
+.points-col{
+
+width:70px;
+text-align:right;
+font-weight:bold;
+
+}
+
 /* MOBILE */
 
 @media (max-width:600px){
