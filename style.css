@@ -338,37 +338,51 @@ font-weight:bold;
 
 /* MOBILE */
 
+/* ===== MOBILE STANDINGS TABLE FIX (IPHONE OPTIMIZED) ===== */
+
 @media (max-width:600px){
 
-.container{
-
-padding:0 5px;
-
+.standings-table{
+width:100%;
+table-layout:fixed;
 }
 
-.title{
+/* POS COLUMN */
 
-font-size:28px;
-
+.standings-table .pos-col{
+width:40px;
+min-width:40px;
+max-width:40px;
+text-align:left;
 }
 
-.nav{
+/* DRIVER COLUMN */
 
-gap:8px;
-
+.standings-table .driver-col{
+width:45%;
+word-break:keep-all;
 }
 
-.nav-btn{
+/* TEAM COLUMN */
 
-padding:9px 14px;
-font-size:14px;
-
+.standings-table .team-col{
+width:35%;
+word-break:keep-all;
 }
 
-#countdown{
+/* POINTS COLUMN */
 
-font-size:30px;
+.standings-table .points-col{
+width:50px;
+min-width:50px;
+max-width:50px;
+text-align:right;
+}
 
+/* HEADER ALIGNMENT */
+
+.standings-table th.points-col{
+text-align:right;
 }
 
 }
