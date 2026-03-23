@@ -166,6 +166,8 @@ function showPage(page) {
 
   setTimeout(() => {
     document.getElementById(page).classList.remove("hidden")
+    // Always scroll to top when switching pages
+    window.scrollTo({ top: 0, behavior: "instant" })
   }, 50)
 
   // When Calendar nav btn is tapped, always reset to the
@@ -198,10 +200,12 @@ function showCalendarSub(id) {
   document.getElementById("calendarSubUpcoming").style.display = "none"
   document.getElementById("calendarSubCancelled").style.display = "none"
   document.getElementById(id).style.display = "block"
+  window.scrollTo({ top: 0, behavior: "instant" })
 }
 
 function showCalendarBack() {
   showCalendarMenu()
+  window.scrollTo({ top: 0, behavior: "instant" })
 }
 
 function getFlag(code) {
@@ -552,7 +556,22 @@ function renderSessions(sessions) {
    openRacePage — upgraded with fail-safe 9
    ────────────────────────────────────────────────────────── */
 
-async function openRacePage(race, start, end, isCancelled = false) {
+async function openRacePage(race, start, end, isCancelled = false, backTarget = null) {
+
+  // Store where we came from so the back button can return there
+  window._racePageBackTarget = backTarget
+
+  // Update back button label and visibility
+  const backBar = document.getElementById("racePageBackBar")
+  const backBtn = document.getElementById("racePageBackBtn")
+  if (backBar && backBtn) {
+    if (backTarget) {
+      backBtn.innerText = "‹ " + backTarget.label
+      backBar.style.display = "flex"
+    } else {
+      backBar.style.display = "none"
+    }
+  }
 
   showPage("racePage")
 
@@ -687,7 +706,7 @@ ${start.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
 ${end.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
 </div>
 `
-    item.onclick = () => openRacePage(r, start, end)
+    item.onclick = () => openRacePage(r, start, end, false, { type: "calendarSub", id: "calendarSubNext", label: "Next Race" })
     return item
 
   }
@@ -712,7 +731,7 @@ ${start.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
 ${end.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
 </div>
 `
-    item.onclick = () => openRacePage(r, start, end, true)
+    item.onclick = () => openRacePage(r, start, end, true, { type: "calendarSub", id: "calendarSubCancelled", label: "Cancelled" })
     return item
 
   }
@@ -732,7 +751,21 @@ ${end.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
   upcomingContainer.innerHTML = ""
 
   if (upcoming.length) {
-    upcoming.forEach(x => upcomingContainer.appendChild(makeRaceItem(x.r, x.start, x.end)))
+    upcoming.forEach(x => {
+      let item = document.createElement("div")
+      item.className = "calendar-item"
+      item.innerHTML = `
+<div class="calendar-race">${getFlag(x.r.country_code)} ${x.r.meeting_name}</div>
+<div class="calendar-date">
+Race Weekend<br>
+${x.start.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+–
+${x.end.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+</div>
+`
+      item.onclick = () => openRacePage(x.r, x.start, x.end, false, { type: "calendarSub", id: "calendarSubUpcoming", label: "Upcoming" })
+      upcomingContainer.appendChild(item)
+    })
   } else {
     upcomingContainer.innerHTML = "<p style='color:#aaa;padding:10px'>No upcoming races.</p>"
   }
@@ -1052,6 +1085,10 @@ async function openResultPage(round) {
 
   showPage("resultPage")
 
+  // Show back button on result detail page
+  const backBar = document.getElementById("resultPageBackBar")
+  if (backBar) backBar.style.display = "flex"
+
   // Reset header
   document.getElementById("resultPageName").innerText = "Loading..."
   document.getElementById("resultPageDate").innerText = ""
@@ -1263,6 +1300,29 @@ function showResultTab(tab) {
   document.getElementById("resultTab" + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = "block"
   document.getElementById("tab" + tab.charAt(0).toUpperCase() + tab.slice(1) + "Btn").classList.add("tab-active")
 
+}
+
+/* ──────────────────────────────────────────────────────────
+   BACK NAVIGATION HELPERS
+   ────────────────────────────────────────────────────────── */
+
+function goBackFromRacePage() {
+  const target = window._racePageBackTarget
+  if (!target) {
+    showPage("calendar")
+    return
+  }
+  if (target.type === "calendarSub") {
+    showPage("calendar")
+    setTimeout(() => showCalendarSub(target.id), 70)
+  } else if (target.type === "page") {
+    showPage(target.id)
+  }
+}
+
+function goBackFromResultPage() {
+  showPage("results")
+  loadResults()
 }
 
 /* ──────────────────────────────────────────────────────────
