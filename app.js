@@ -340,7 +340,11 @@ function processRaceData(meetings) {
 
   for (let race of meetings) {
     let start = new Date(race.date_start)
-    if (start > now) {
+    // Use end of weekend (start + 3 days) so ongoing race weekends
+    // are not skipped. A weekend is only "over" after race day ends.
+    let end = new Date(start)
+    end.setDate(end.getDate() + 3)
+    if (end > now) {
       nextRace = race
       break
     }
@@ -522,10 +526,12 @@ function renderCalendar(races) {
     let end = new Date(start)
     end.setDate(end.getDate() + 2)
 
-    if (start > now && !next) {
+    // Show ongoing weekends as NEXT RACE by checking end > now
+    // instead of start > now — fixes the "skipped race weekend" bug
+    if (end > now && !next) {
       next = { r, start, end }
     }
-    else if (start > now) {
+    else if (end > now) {
       upcoming.push({ r, start, end })
     }
 
@@ -742,6 +748,302 @@ window.addEventListener("DOMContentLoaded", () => {
   if (teamsCard && !teamsCard.id) teamsCard.id = "teamsContent"
 
 })
+
+/* ══════════════════════════════════════════════════════════
+   RESULTS PAGE
+   Shows completed race weekends with:
+   - Race result (POS / DRIVER / TEAM / TIME / PTS)
+   - Qualifying result (POS / DRIVER / TEAM / Q1 / Q2 / Q3)
+   - Fastest lap
+   - Sprint result if available (POS / DRIVER / TEAM / TIME / PTS)
+   ══════════════════════════════════════════════════════════ */
+
+/* List of completed rounds — fetched once and reused */
+let completedRounds = []
+
+async function loadResults() {
+
+  const container = document.getElementById("resultsContent")
+  container.innerHTML = "<p style='color:#aaa;text-align:center;padding:16px'>Loading results...</p>"
+
+  const year = new Date().getFullYear()
+
+  // Update page title to current year dynamically
+  const heading = document.querySelector("#results .card h3")
+  if (heading) heading.innerText = year + " Race Results"
+
+  try {
+
+    const { data } = await cachedFetch(
+      `https://api.jolpi.ca/ergast/f1/${year}/results.json?limit=100`,
+      `results${year}`
+    )
+
+    const races = data.MRData.RaceTable.Races
+
+    if (!races || races.length === 0) {
+      container.innerHTML = "<p style='color:#aaa;text-align:center;padding:16px'>No results available yet.</p>"
+      return
+    }
+
+    // Store completed rounds for sub-page loading
+    completedRounds = races
+
+    container.innerHTML = ""
+
+    // Show most recent first
+    const reversed = [...races].reverse()
+
+    reversed.forEach(race => {
+
+      const item = document.createElement("div")
+      item.className = "calendar-item"
+
+      const raceDate = new Date(race.date)
+
+      item.innerHTML = `
+<div class="calendar-race">${getFlag(getRoundCountryCode(race))} ${race.raceName}</div>
+<div class="calendar-date">
+Round ${race.round} · ${raceDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+</div>
+`
+      item.onclick = () => openResultPage(race.round)
+      container.appendChild(item)
+
+    })
+
+  } catch (err) {
+    showError("resultsContent", err.message || "Failed to load results.")
+  }
+
+}
+
+/* Helper — map race country to flag code */
+function getRoundCountryCode(race) {
+  const map = {
+    "Australia": "AU",
+    "China": "CN",
+    "Japan": "JP",
+    "Bahrain": "BH",
+    "Saudi Arabia": "SA",
+    "Italy": "IT",
+    "USA": "US",
+    "United States": "US",
+    "Spain": "ES",
+    "Canada": "CA",
+    "Monaco": "MC",
+    "Austria": "AT",
+    "UK": "GB",
+    "Great Britain": "GB",
+    "Hungary": "HU",
+    "Belgium": "BE",
+    "Netherlands": "NL",
+    "Singapore": "SG",
+    "Mexico": "MX",
+    "Brazil": "BR",
+    "Qatar": "QA",
+    "Abu Dhabi": "AE"
+  }
+  return map[race.Circuit.Location.country] || ""
+}
+
+/* ──────────────────────────────────────────────────────────
+   openResultPage — loads race + qualifying + sprint
+   for a specific round and shows the result sub-page
+   ────────────────────────────────────────────────────────── */
+
+async function openResultPage(round) {
+
+  showPage("resultPage")
+
+  // Reset all sections to loading state
+  document.getElementById("resultPageName").innerText = "Loading..."
+  document.getElementById("resultPageRaceTable").innerHTML = "<p style='color:#aaa;padding:10px'>Loading race result...</p>"
+  document.getElementById("resultPageQualiTable").innerHTML = "<p style='color:#aaa;padding:10px'>Loading qualifying result...</p>"
+  document.getElementById("resultPageFastestLap").innerText = "--"
+  document.getElementById("resultPageSprintCard").style.display = "none"
+
+  // Load race result + qualifying in parallel
+  try {
+
+    const year = new Date().getFullYear()
+
+    const [raceRes, qualiRes, sprintRes] = await Promise.allSettled([
+      cachedFetch(`https://api.jolpi.ca/ergast/f1/${year}/${round}/results.json`, `raceResult_${year}_${round}`),
+      cachedFetch(`https://api.jolpi.ca/ergast/f1/${year}/${round}/qualifying.json`, `qualiResult_${year}_${round}`),
+      cachedFetch(`https://api.jolpi.ca/ergast/f1/${year}/${round}/sprint.json`, `sprintResult_${year}_${round}`)
+    ])
+
+    /* ── RACE RESULT ── */
+    if (raceRes.status === "fulfilled") {
+
+      const race = raceRes.value.data.MRData.RaceTable.Races[0]
+
+      if (race) {
+
+        document.getElementById("resultPageName").innerText =
+          getFlag(getRoundCountryCode(race)) + " " + race.raceName
+
+        document.getElementById("resultPageDate").innerText =
+          new Date(race.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+
+        const results = race.Results
+
+        /* Fastest lap */
+        const flDriver = results.find(r => r.FastestLap && r.FastestLap.rank === "1")
+        if (flDriver) {
+          document.getElementById("resultPageFastestLap").innerText =
+            flDriver.Driver.givenName + " " + flDriver.Driver.familyName +
+            " — " + flDriver.FastestLap.Time.time +
+            " (Lap " + flDriver.FastestLap.lap + ")"
+        } else {
+          document.getElementById("resultPageFastestLap").innerText = "Not available"
+        }
+
+        /* Race table */
+        let html = `
+<table class="standings-table">
+<thead>
+<tr>
+<th class="pos-col">POS</th>
+<th class="driver-col">DRIVER</th>
+<th class="team-col">TEAM</th>
+<th class="time-col">TIME/GAP</th>
+<th class="points-col">PTS</th>
+</tr>
+</thead>
+<tbody>
+`
+        results.forEach(r => {
+
+          const gap = r.position === "1"
+            ? (r.Time ? r.Time.time : "—")
+            : (r.Time ? "+" + r.Time.time : r.status || "—")
+
+          html += `
+<tr>
+<td class="pos-col">${r.position}</td>
+<td class="driver-col">${r.Driver.givenName} ${r.Driver.familyName}</td>
+<td class="team-col">${r.Constructor.name}</td>
+<td class="time-col">${gap}</td>
+<td class="points-col">${r.points}</td>
+</tr>
+`
+        })
+
+        html += "</tbody></table>"
+        document.getElementById("resultPageRaceTable").innerHTML = html
+
+      }
+
+    } else {
+      document.getElementById("resultPageRaceTable").innerHTML =
+        "<p style='color:#ff4747;padding:10px'>⚠️ Race result unavailable.</p>"
+    }
+
+    /* ── QUALIFYING RESULT ── */
+    if (qualiRes.status === "fulfilled") {
+
+      const qualiRace = qualiRes.value.data.MRData.RaceTable.Races[0]
+
+      if (qualiRace && qualiRace.QualifyingResults) {
+
+        const qResults = qualiRace.QualifyingResults
+
+        let html = `
+<table class="standings-table">
+<thead>
+<tr>
+<th class="pos-col">POS</th>
+<th class="driver-col">DRIVER</th>
+<th class="team-col">TEAM</th>
+<th class="time-col">Q3 / BEST</th>
+</tr>
+</thead>
+<tbody>
+`
+        qResults.forEach(q => {
+
+          const best = q.Q3 || q.Q2 || q.Q1 || "—"
+
+          html += `
+<tr>
+<td class="pos-col">${q.position}</td>
+<td class="driver-col">${q.Driver.givenName} ${q.Driver.familyName}</td>
+<td class="team-col">${q.Constructor.name}</td>
+<td class="time-col">${best}</td>
+</tr>
+`
+        })
+
+        html += "</tbody></table>"
+        document.getElementById("resultPageQualiTable").innerHTML = html
+
+      } else {
+        document.getElementById("resultPageQualiTable").innerHTML =
+          "<p style='color:#aaa;padding:10px'>Qualifying data not available.</p>"
+      }
+
+    } else {
+      document.getElementById("resultPageQualiTable").innerHTML =
+        "<p style='color:#ff4747;padding:10px'>⚠️ Qualifying result unavailable.</p>"
+    }
+
+    /* ── SPRINT RESULT (if available) ── */
+    if (sprintRes.status === "fulfilled") {
+
+      const sprintRace = sprintRes.value.data.MRData.RaceTable.Races[0]
+
+      if (sprintRace && sprintRace.SprintResults && sprintRace.SprintResults.length > 0) {
+
+        document.getElementById("resultPageSprintCard").style.display = "block"
+
+        const sResults = sprintRace.SprintResults
+
+        let html = `
+<table class="standings-table">
+<thead>
+<tr>
+<th class="pos-col">POS</th>
+<th class="driver-col">DRIVER</th>
+<th class="team-col">TEAM</th>
+<th class="time-col">TIME/GAP</th>
+<th class="points-col">PTS</th>
+</tr>
+</thead>
+<tbody>
+`
+        sResults.forEach(s => {
+
+          const gap = s.position === "1"
+            ? (s.Time ? s.Time.time : "—")
+            : (s.Time ? "+" + s.Time.time : s.status || "—")
+
+          html += `
+<tr>
+<td class="pos-col">${s.position}</td>
+<td class="driver-col">${s.Driver.givenName} ${s.Driver.familyName}</td>
+<td class="team-col">${s.Constructor.name}</td>
+<td class="time-col">${gap}</td>
+<td class="points-col">${s.points}</td>
+</tr>
+`
+        })
+
+        html += "</tbody></table>"
+        document.getElementById("resultPageSprintTable").innerHTML = html
+
+      }
+      // If no sprint data, card stays hidden — no error shown
+
+    }
+
+  } catch (err) {
+    document.getElementById("resultPageName").innerText = "Error"
+    showError("resultPageRaceTable", err.message || "Failed to load result.")
+  }
+
+}
 
 /* ──────────────────────────────────────────────────────────
    BOOT — Load all data on startup

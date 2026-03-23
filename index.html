@@ -31,6 +31,7 @@
 <button onclick="showPage('sessions')" class="nav-btn">Sessions</button>
 <button onclick="showPage('drivers')" class="nav-btn">Drivers</button>
 <button onclick="showPage('teams')" class="nav-btn">Teams</button>
+<button onclick="showPage('results');loadResults()" class="nav-btn">Results</button>
 
 </div>
 
@@ -120,6 +121,61 @@
 
 <h3>Constructor Standings</h3>
 <p>No teams standings have been released as of now.</p>
+
+</div>
+
+</div>
+
+<!-- RESULTS LIST PAGE -->
+
+<div id="results" class="page hidden">
+
+<div class="card">
+
+<h3>Race Results</h3>
+<div id="resultsContent"></div>
+
+</div>
+
+</div>
+
+<!-- RESULT DETAIL PAGE -->
+
+<div id="resultPage" class="page hidden">
+
+<div class="card">
+
+<h2 id="resultPageName"></h2>
+<p id="resultPageDate" style="color:#aaa;margin-top:4px"></p>
+
+</div>
+
+<div class="card">
+
+<h3>Fastest Lap 🟣</h3>
+<p id="resultPageFastestLap">--</p>
+
+</div>
+
+<div class="card">
+
+<h3>Race Result</h3>
+<div id="resultPageRaceTable"></div>
+
+</div>
+
+<div class="card">
+
+<h3>Qualifying Result</h3>
+<div id="resultPageQualiTable"></div>
+
+</div>
+
+<!-- Sprint card — hidden by default, shown only if sprint data exists -->
+<div id="resultPageSprintCard" class="card" style="display:none">
+
+<h3>Sprint Result</h3>
+<div id="resultPageSprintTable"></div>
 
 </div>
 
