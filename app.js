@@ -467,7 +467,7 @@ async function openRacePage(race, start, end) {
 
   showPage("racePage")
 
-  document.getElementById("racePageName").innerText = race.meeting_name
+  document.getElementById("racePageName").innerText = getFlag(race.country_code) + " " + race.meeting_name
   document.getElementById("racePageCircuit").innerText = race.circuit_short_name
   document.getElementById("racePageLocation").innerText =
     race.location + ", " + race.country_name
@@ -572,7 +572,7 @@ function renderCalendar(races) {
 
     item.innerHTML = `
 
-<div class="calendar-race">${r.meeting_name}</div>
+<div class="calendar-race">${getFlag(r.country_code)} ${r.meeting_name}</div>
 <div class="calendar-date">
 Race Weekend<br>
 ${start.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
