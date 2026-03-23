@@ -163,6 +163,25 @@
 
 <script src="app.js"></script>
 
+<!-- ============================================================
+     FAIL-SAFE 12 — SERVICE WORKER REGISTRATION
+     Registers sw.js for true offline PWA support.
+     Only runs if the browser supports service workers.
+     ============================================================ -->
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js")
+      .then(reg => {
+        console.log("[Race Control] Service Worker registered:", reg.scope)
+      })
+      .catch(err => {
+        console.warn("[Race Control] Service Worker registration failed:", err)
+      })
+  })
+}
+</script>
+
 </body>
 
 </html>
