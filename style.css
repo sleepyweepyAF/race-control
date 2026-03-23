@@ -500,3 +500,125 @@ text-align:right;
   border-color: #e10600;
   color: white;
 }
+
+/* ── CANCELLED RACES ── */
+
+.calendar-title-cancelled {
+  color: #ff4747;
+}
+
+.calendar-item-cancelled {
+  border-color: #3a1a1a;
+  background: #110a0a;
+  opacity: 0.85;
+}
+
+.calendar-item-cancelled:hover {
+  background: #1a0d0d;
+  transform: translateY(-2px);
+}
+
+.cancelled-label {
+  color: #ff4747;
+  font-weight: bold;
+  font-size: 12px;
+  letter-spacing: 0.8px;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+/* ── CALENDAR MENU BUTTONS ── */
+
+.cal-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(160deg, #151515, #111);
+  border: 1px solid #222;
+  border-radius: 12px;
+  padding: 20px 18px;
+  margin-bottom: 14px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+}
+
+.cal-menu-btn:hover {
+  background: linear-gradient(160deg, #1e1e1e, #181818);
+  transform: translateY(-2px);
+  border-color: #e10600;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+}
+
+.cal-menu-btn-cancelled {
+  border-color: #3a1a1a;
+  background: linear-gradient(160deg, #130a0a, #0f0808);
+}
+
+.cal-menu-btn-cancelled:hover {
+  border-color: #ff4747;
+  background: linear-gradient(160deg, #1a0d0d, #140909);
+}
+
+.cal-menu-icon {
+  font-size: 26px;
+  width: 36px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.cal-menu-label {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+}
+
+.cal-menu-btn-cancelled .cal-menu-label {
+  color: #ff8080;
+}
+
+.cal-menu-arrow {
+  font-size: 22px;
+  color: #555;
+  font-weight: 300;
+}
+
+.cal-menu-btn:hover .cal-menu-arrow {
+  color: #e10600;
+}
+
+/* ── CALENDAR SUBPAGE BACK BAR ── */
+
+.cal-back-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.cal-back-btn {
+  background: #151515;
+  border: 1px solid #2a2a2a;
+  color: #e10600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.cal-back-btn:hover {
+  background: #e10600;
+  color: white;
+  border-color: #e10600;
+}
+
+.cal-sub-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e10600;
+  letter-spacing: 0.4px;
+}

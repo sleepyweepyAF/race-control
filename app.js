@@ -168,6 +168,40 @@ function showPage(page) {
     document.getElementById(page).classList.remove("hidden")
   }, 50)
 
+  // When Calendar nav btn is tapped, always reset to the
+  // main calendar menu (hides any open calendar subpage)
+  if (page === "calendar") {
+    setTimeout(() => {
+      showCalendarMenu()
+    }, 60)
+  }
+
+}
+
+/* ──────────────────────────────────────────────────────────
+   CALENDAR SUBPAGE SYSTEM
+   showCalendarMenu()     — shows the 3 big buttons
+   showCalendarSub(id)    — shows a subpage, hides menu
+   showCalendarBack()     — returns to menu from subpage
+   ────────────────────────────────────────────────────────── */
+
+function showCalendarMenu() {
+  document.getElementById("calendarMenu").style.display = "block"
+  document.getElementById("calendarSubNext").style.display = "none"
+  document.getElementById("calendarSubUpcoming").style.display = "none"
+  document.getElementById("calendarSubCancelled").style.display = "none"
+}
+
+function showCalendarSub(id) {
+  document.getElementById("calendarMenu").style.display = "none"
+  document.getElementById("calendarSubNext").style.display = "none"
+  document.getElementById("calendarSubUpcoming").style.display = "none"
+  document.getElementById("calendarSubCancelled").style.display = "none"
+  document.getElementById(id).style.display = "block"
+}
+
+function showCalendarBack() {
+  showCalendarMenu()
 }
 
 function getFlag(code) {
@@ -197,34 +231,80 @@ function getFlag(code) {
   }
 
   // 3-letter codes (used by OpenF1 API — Home + Calendar pages)
+  // Includes all known variants OpenF1 may return
   const flags3 = {
     CHN: "🇨🇳",
     BHR: "🇧🇭",
+    BAH: "🇧🇭",
     AUS: "🇦🇺",
     SAU: "🇸🇦",
+    KSA: "🇸🇦",
     JPN: "🇯🇵",
     ITA: "🇮🇹",
+    IMO: "🇮🇹",
     USA: "🇺🇸",
     ESP: "🇪🇸",
     CAN: "🇨🇦",
     MCO: "🇲🇨",
+    MON: "🇲🇨",
     AUT: "🇦🇹",
     GBR: "🇬🇧",
     HUN: "🇭🇺",
     BEL: "🇧🇪",
     NLD: "🇳🇱",
+    NED: "🇳🇱",
     SGP: "🇸🇬",
     MEX: "🇲🇽",
     BRA: "🇧🇷",
     QAT: "🇶🇦",
     ARE: "🇦🇪",
+    UAE: "🇦🇪",
+    ABU: "🇦🇪",
     AZE: "🇦🇿",
-    MYS: "🇲🇾"
+    MYS: "🇲🇾",
+    POR: "🇵🇹",
+    RSA: "🇿🇦",
+    TUR: "🇹🇷",
+    MIA: "🇺🇸",
+    LAS: "🇺🇸",
+    ATL: "🇺🇸"
   }
 
   if (!code) return "🏁"
   return flags2[code] || flags3[code] || "🏁"
 
+}
+
+/* Fallback flag lookup by meeting name — used when country_code is missing */
+function getFlagByName(name) {
+  const nameMap = {
+    "Bahrain Grand Prix":       "🇧🇭",
+    "Saudi Arabian Grand Prix": "🇸🇦",
+    "Australian Grand Prix":    "🇦🇺",
+    "Chinese Grand Prix":       "🇨🇳",
+    "Japanese Grand Prix":      "🇯🇵",
+    "Miami Grand Prix":         "🇺🇸",
+    "Emilia Romagna Grand Prix":"🇮🇹",
+    "Monaco Grand Prix":        "🇲🇨",
+    "Canadian Grand Prix":      "🇨🇦",
+    "Spanish Grand Prix":       "🇪🇸",
+    "Austrian Grand Prix":      "🇦🇹",
+    "British Grand Prix":       "🇬🇧",
+    "Hungarian Grand Prix":     "🇭🇺",
+    "Belgian Grand Prix":       "🇧🇪",
+    "Dutch Grand Prix":         "🇳🇱",
+    "Italian Grand Prix":       "🇮🇹",
+    "Azerbaijan Grand Prix":    "🇦🇿",
+    "Singapore Grand Prix":     "🇸🇬",
+    "United States Grand Prix": "🇺🇸",
+    "Mexico City Grand Prix":   "🇲🇽",
+    "São Paulo Grand Prix":     "🇧🇷",
+    "Las Vegas Grand Prix":     "🇺🇸",
+    "Qatar Grand Prix":         "🇶🇦",
+    "Abu Dhabi Grand Prix":     "🇦🇪",
+    "Barcelona Grand Prix":     "🇪🇸"
+  }
+  return nameMap[name] || "🏁"
 }
 
 function formatIST(date) {
@@ -361,10 +441,19 @@ async function loadRaceData() {
    processRaceData works with both fresh and cached data.
    ────────────────────────────────────────────────────────── */
 
+// Officially cancelled 2026 races — filtered from all views
+const CANCELLED_RACES = [
+  "Bahrain Grand Prix",
+  "Saudi Arabian Grand Prix"
+]
+
 function processRaceData(meetings) {
 
   const now = new Date()
   let nextRace = null
+
+  // Filter out cancelled races before processing
+  meetings = meetings.filter(r => !CANCELLED_RACES.includes(r.meeting_name))
 
   for (let race of meetings) {
     let start = new Date(race.date_start)
@@ -463,11 +552,18 @@ function renderSessions(sessions) {
    openRacePage — upgraded with fail-safe 9
    ────────────────────────────────────────────────────────── */
 
-async function openRacePage(race, start, end) {
+async function openRacePage(race, start, end, isCancelled = false) {
 
   showPage("racePage")
 
-  document.getElementById("racePageName").innerText = getFlag(race.country_code) + " " + race.meeting_name
+  // Use name-based flag fallback in case country_code is missing or wrong
+  const flag = getFlag(race.country_code) !== "🏁"
+    ? getFlag(race.country_code)
+    : getFlagByName(race.meeting_name)
+
+  // Show cancelled badge in title if applicable
+  const cancelledBadge = isCancelled ? "🚫 " : ""
+  document.getElementById("racePageName").innerText = cancelledBadge + flag + " " + race.meeting_name
   document.getElementById("racePageCircuit").innerText = race.circuit_short_name
   document.getElementById("racePageLocation").innerText =
     race.location + ", " + race.country_name
@@ -477,6 +573,12 @@ async function openRacePage(race, start, end) {
     start.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) +
     " – " +
     end.toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+
+  // Hide countdown card entirely for cancelled races
+  const countdownCard = document.getElementById("racePageCountdownCard")
+  if (countdownCard) {
+    countdownCard.style.display = isCancelled ? "none" : "block"
+  }
 
   try {
 
@@ -503,7 +605,9 @@ async function openRacePage(race, start, end) {
 
     })
 
-    startRacePageCountdown()
+    if (!isCancelled) {
+      startRacePageCountdown()
+    }
 
   } catch (err) {
 
@@ -540,23 +644,26 @@ async function loadCalendar() {
 
 function renderCalendar(races) {
 
-  const container = document.getElementById("calendarContent")
-  container.innerHTML = ""
-
   const now = new Date()
+  const currentYear = new Date().getFullYear()
 
   let next = null
   let upcoming = []
+  let cancelled = []
 
+  // Sort races into three buckets
   races.forEach(r => {
 
     let start = new Date(r.date_start)
     let end = new Date(start)
     end.setDate(end.getDate() + 2)
 
-    // Show ongoing weekends as NEXT RACE by checking end > now
-    // instead of start > now — fixes the "skipped race weekend" bug
-    if (end > now && !next) {
+    if (CANCELLED_RACES.includes(r.meeting_name)) {
+      if (start.getFullYear() === currentYear) {
+        cancelled.push({ r, start, end })
+      }
+    }
+    else if (end > now && !next) {
       next = { r, start, end }
     }
     else if (end > now) {
@@ -565,13 +672,13 @@ function renderCalendar(races) {
 
   })
 
-  function addRace(r, start, end) {
+  // ── Helper: build a standard race item ──
+  function makeRaceItem(r, start, end) {
 
     let item = document.createElement("div")
     item.className = "calendar-item"
 
     item.innerHTML = `
-
 <div class="calendar-race">${getFlag(r.country_code)} ${r.meeting_name}</div>
 <div class="calendar-date">
 Race Weekend<br>
@@ -579,38 +686,69 @@ ${start.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
 –
 ${end.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
 </div>
-
 `
-
     item.onclick = () => openRacePage(r, start, end)
-
-    container.appendChild(item)
+    return item
 
   }
+
+  // ── Helper: build a cancelled race item ──
+  function makeCancelledItem(r, start, end) {
+
+    let item = document.createElement("div")
+    item.className = "calendar-item calendar-item-cancelled"
+
+    const cancelledFlag = getFlag(r.country_code) !== "🏁"
+      ? getFlag(r.country_code)
+      : getFlagByName(r.meeting_name)
+
+    item.innerHTML = `
+<div class="calendar-race">🚫 ${cancelledFlag} ${r.meeting_name}</div>
+<div class="calendar-date cancelled-label">CANCELLED</div>
+<div class="calendar-date">
+Was scheduled:<br>
+${start.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+–
+${end.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+</div>
+`
+    item.onclick = () => openRacePage(r, start, end, true)
+    return item
+
+  }
+
+  // ── Populate NEXT RACE subpage ──
+  const nextContainer = document.getElementById("nextSubContent")
+  nextContainer.innerHTML = ""
 
   if (next) {
-
-    let title = document.createElement("div")
-    title.className = "calendar-title"
-    title.innerText = "NEXT RACE"
-
-    container.appendChild(title)
-
-    addRace(next.r, next.start, next.end)
-
+    nextContainer.appendChild(makeRaceItem(next.r, next.start, next.end))
+  } else {
+    nextContainer.innerHTML = "<p style='color:#aaa;padding:10px'>No upcoming race found.</p>"
   }
+
+  // ── Populate UPCOMING subpage ──
+  const upcomingContainer = document.getElementById("upcomingSubContent")
+  upcomingContainer.innerHTML = ""
 
   if (upcoming.length) {
-
-    let title = document.createElement("div")
-    title.className = "calendar-title"
-    title.innerText = "UPCOMING RACES"
-
-    container.appendChild(title)
-
-    upcoming.forEach(x => addRace(x.r, x.start, x.end))
-
+    upcoming.forEach(x => upcomingContainer.appendChild(makeRaceItem(x.r, x.start, x.end)))
+  } else {
+    upcomingContainer.innerHTML = "<p style='color:#aaa;padding:10px'>No upcoming races.</p>"
   }
+
+  // ── Populate CANCELLED subpage ──
+  const cancelledContainer = document.getElementById("cancelledSubContent")
+  cancelledContainer.innerHTML = ""
+
+  if (cancelled.length) {
+    cancelled.forEach(x => cancelledContainer.appendChild(makeCancelledItem(x.r, x.start, x.end)))
+  } else {
+    cancelledContainer.innerHTML = "<p style='color:#aaa;padding:10px'>No cancelled races this season.</p>"
+  }
+
+  // Show the main calendar menu by default
+  showCalendarMenu()
 
 }
 

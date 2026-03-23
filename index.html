@@ -78,10 +78,72 @@
 
 <div id="calendar" class="page hidden">
 
-<div class="card">
+<!-- CALENDAR MAIN MENU — 3 big buttons -->
+<div id="calendarMenu">
 
+<div class="card">
 <h3>Season Calendar</h3>
-<div id="calendarContent"></div>
+</div>
+
+<div class="cal-menu-btn" onclick="showCalendarSub('calendarSubNext')">
+<div class="cal-menu-icon">🏁</div>
+<div class="cal-menu-label">Next Race Weekend</div>
+<div class="cal-menu-arrow">›</div>
+</div>
+
+<div class="cal-menu-btn" onclick="showCalendarSub('calendarSubUpcoming')">
+<div class="cal-menu-icon">📅</div>
+<div class="cal-menu-label">Upcoming Race Weekends</div>
+<div class="cal-menu-arrow">›</div>
+</div>
+
+<div class="cal-menu-btn cal-menu-btn-cancelled" onclick="showCalendarSub('calendarSubCancelled')">
+<div class="cal-menu-icon">🚫</div>
+<div class="cal-menu-label">Cancelled Race Weekends</div>
+<div class="cal-menu-arrow">›</div>
+</div>
+
+</div>
+
+<!-- NEXT RACE SUBPAGE -->
+<div id="calendarSubNext" style="display:none">
+
+<div class="cal-back-bar">
+<button class="cal-back-btn" onclick="showCalendarBack()">‹ Calendar</button>
+<span class="cal-sub-title">Next Race Weekend</span>
+</div>
+
+<div class="card">
+<div id="nextSubContent"></div>
+</div>
+
+</div>
+
+<!-- UPCOMING RACES SUBPAGE -->
+<div id="calendarSubUpcoming" style="display:none">
+
+<div class="cal-back-bar">
+<button class="cal-back-btn" onclick="showCalendarBack()">‹ Calendar</button>
+<span class="cal-sub-title">Upcoming Race Weekends</span>
+</div>
+
+<div class="card">
+<div id="upcomingSubContent"></div>
+</div>
+
+</div>
+
+<!-- CANCELLED RACES SUBPAGE -->
+<div id="calendarSubCancelled" style="display:none">
+
+<div class="cal-back-bar">
+<button class="cal-back-btn" onclick="showCalendarBack()">‹ Calendar</button>
+<span class="cal-sub-title">Cancelled Race Weekends</span>
+</div>
+
+<div class="card">
+<div id="cancelledSubContent"></div>
+</div>
 
 </div>
 
@@ -202,7 +264,7 @@
 
 </div>
 
-<div class="card">
+<div class="card" id="racePageCountdownCard">
 
 <h3>Race Countdown</h3>
 <div id="racePageCountdown">--</div>
