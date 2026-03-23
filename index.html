@@ -143,40 +143,43 @@
 
 <div id="resultPage" class="page hidden">
 
+<!-- Header card -->
 <div class="card">
-
 <h2 id="resultPageName"></h2>
 <p id="resultPageDate" style="color:#aaa;margin-top:4px"></p>
-
 </div>
 
+<!-- Fastest Lap -->
 <div class="card">
-
 <h3>Fastest Lap 🟣</h3>
 <p id="resultPageFastestLap">--</p>
-
 </div>
 
-<div class="card">
+<!-- Tab buttons -->
+<div class="result-tabs">
+<button id="tabRaceBtn" class="result-tab-btn tab-active" onclick="showResultTab('race')">Race</button>
+<button id="tabQualiBtn" class="result-tab-btn" onclick="showResultTab('quali')">Qualifying</button>
+<button id="tabSprintBtn" class="result-tab-btn" onclick="showResultTab('sprint')" style="display:none">Sprint</button>
+</div>
 
+<!-- Race tab panel -->
+<div id="resultTabRace" class="card">
 <h3>Race Result</h3>
 <div id="resultPageRaceTable"></div>
-
 </div>
 
-<div class="card">
-
+<!-- Qualifying tab panel -->
+<div id="resultTabQuali" class="card" style="display:none">
 <h3>Qualifying Result</h3>
 <div id="resultPageQualiTable"></div>
-
 </div>
 
-<!-- Sprint card — hidden by default, shown only if sprint data exists -->
-<div id="resultPageSprintCard" class="card" style="display:none">
-
+<!-- Sprint tab panel — hidden by default -->
+<div id="resultTabSprint" class="card" style="display:none">
+<div id="resultPageSprintCard" style="display:none">
 <h3>Sprint Result</h3>
 <div id="resultPageSprintTable"></div>
-
+</div>
 </div>
 
 </div>

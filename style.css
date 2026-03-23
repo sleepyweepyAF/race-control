@@ -467,3 +467,36 @@ text-align:right;
   }
 
 }
+
+/* ── RESULT PAGE TABS ── */
+
+.result-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.result-tab-btn {
+  background: #151515;
+  border: 1px solid #2a2a2a;
+  color: #aaa;
+  padding: 9px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  flex: 1;
+}
+
+.result-tab-btn:hover {
+  background: #1e1e1e;
+  color: white;
+}
+
+.result-tab-btn.tab-active {
+  background: #e10600;
+  border-color: #e10600;
+  color: white;
+}

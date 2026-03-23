@@ -172,7 +172,8 @@ function showPage(page) {
 
 function getFlag(code) {
 
-  const flags = {
+  // 2-letter codes (used by Ergast API + Results page)
+  const flags2 = {
     CN: "🇨🇳",
     BH: "🇧🇭",
     AU: "🇦🇺",
@@ -195,7 +196,34 @@ function getFlag(code) {
     AE: "🇦🇪"
   }
 
-  return flags[code] || "🏁"
+  // 3-letter codes (used by OpenF1 API — Home + Calendar pages)
+  const flags3 = {
+    CHN: "🇨🇳",
+    BHR: "🇧🇭",
+    AUS: "🇦🇺",
+    SAU: "🇸🇦",
+    JPN: "🇯🇵",
+    ITA: "🇮🇹",
+    USA: "🇺🇸",
+    ESP: "🇪🇸",
+    CAN: "🇨🇦",
+    MCO: "🇲🇨",
+    AUT: "🇦🇹",
+    GBR: "🇬🇧",
+    HUN: "🇭🇺",
+    BEL: "🇧🇪",
+    NLD: "🇳🇱",
+    SGP: "🇸🇬",
+    MEX: "🇲🇽",
+    BRA: "🇧🇷",
+    QAT: "🇶🇦",
+    ARE: "🇦🇪",
+    AZE: "🇦🇿",
+    MYS: "🇲🇾"
+  }
+
+  if (!code) return "🏁"
+  return flags2[code] || flags3[code] || "🏁"
 
 }
 
@@ -848,22 +876,58 @@ function getRoundCountryCode(race) {
 }
 
 /* ──────────────────────────────────────────────────────────
-   openResultPage — loads race + qualifying + sprint
-   for a specific round and shows the result sub-page
+   STATUS ABBREVIATOR
+   Converts long Ergast status strings to short mobile-friendly text
+   e.g. "Did not start" → "DNS", "Retired" → "RET"
+   ────────────────────────────────────────────────────────── */
+
+function shortStatus(status) {
+  const map = {
+    "Did not start":      "DNS",
+    "Did not qualify":    "DNQ",
+    "Disqualified":       "DSQ",
+    "Retired":            "RET",
+    "Not classified":     "NC",
+    "Withdrew":           "WD",
+    "Excluded":           "EX",
+    "Accident":           "RET",
+    "Collision":          "RET",
+    "Engine":             "RET",
+    "Gearbox":            "RET",
+    "Hydraulics":         "RET",
+    "Electrical":         "RET",
+    "Spun off":           "RET",
+    "Brakes":             "RET",
+    "Suspension":         "RET",
+    "Power Unit":         "RET",
+    "Overheating":        "RET"
+  }
+  return map[status] || status
+}
+
+/* ──────────────────────────────────────────────────────────
+   openResultPage — tabbed layout: Race / Qualifying / Sprint
+   Tabs replace the single long scroll — much cleaner on mobile
    ────────────────────────────────────────────────────────── */
 
 async function openResultPage(round) {
 
   showPage("resultPage")
 
-  // Reset all sections to loading state
+  // Reset header
   document.getElementById("resultPageName").innerText = "Loading..."
-  document.getElementById("resultPageRaceTable").innerHTML = "<p style='color:#aaa;padding:10px'>Loading race result...</p>"
-  document.getElementById("resultPageQualiTable").innerHTML = "<p style='color:#aaa;padding:10px'>Loading qualifying result...</p>"
-  document.getElementById("resultPageFastestLap").innerText = "--"
-  document.getElementById("resultPageSprintCard").style.display = "none"
+  document.getElementById("resultPageDate").innerText = ""
 
-  // Load race result + qualifying in parallel
+  // Show tab bar, default to Race tab
+  showResultTab("race")
+
+  // Set loading states in each tab panel
+  document.getElementById("resultPageFastestLap").innerText = "--"
+  document.getElementById("resultPageRaceTable").innerHTML = "<p style=\'color:#aaa;padding:10px\'>Loading...</p>"
+  document.getElementById("resultPageQualiTable").innerHTML = "<p style=\'color:#aaa;padding:10px\'>Loading...</p>"
+  document.getElementById("resultPageSprintCard").style.display = "none"
+  document.getElementById("tabSprintBtn").style.display = "none"
+
   try {
 
     const year = new Date().getFullYear()
@@ -900,7 +964,6 @@ async function openResultPage(round) {
           document.getElementById("resultPageFastestLap").innerText = "Not available"
         }
 
-        /* Race table */
         let html = `
 <table class="standings-table">
 <thead>
@@ -908,22 +971,21 @@ async function openResultPage(round) {
 <th class="pos-col">POS</th>
 <th class="driver-col">DRIVER</th>
 <th class="team-col">TEAM</th>
-<th class="time-col">TIME/GAP</th>
+<th class="time-col">GAP</th>
 <th class="points-col">PTS</th>
 </tr>
 </thead>
 <tbody>
 `
         results.forEach(r => {
-
           const gap = r.position === "1"
             ? (r.Time ? r.Time.time : "—")
-            : (r.Time ? "+" + r.Time.time : r.status || "—")
+            : (r.Time ? "+" + r.Time.time : shortStatus(r.status))
 
           html += `
 <tr>
 <td class="pos-col">${r.position}</td>
-<td class="driver-col">${r.Driver.givenName} ${r.Driver.familyName}</td>
+<td class="driver-col">${r.Driver.familyName}</td>
 <td class="team-col">${r.Constructor.name}</td>
 <td class="time-col">${gap}</td>
 <td class="points-col">${r.points}</td>
@@ -938,7 +1000,7 @@ async function openResultPage(round) {
 
     } else {
       document.getElementById("resultPageRaceTable").innerHTML =
-        "<p style='color:#ff4747;padding:10px'>⚠️ Race result unavailable.</p>"
+        "<p style=\'color:#ff4747;padding:10px\'>⚠️ Race result unavailable.</p>"
     }
 
     /* ── QUALIFYING RESULT ── */
@@ -957,19 +1019,17 @@ async function openResultPage(round) {
 <th class="pos-col">POS</th>
 <th class="driver-col">DRIVER</th>
 <th class="team-col">TEAM</th>
-<th class="time-col">Q3 / BEST</th>
+<th class="time-col">BEST</th>
 </tr>
 </thead>
 <tbody>
 `
         qResults.forEach(q => {
-
           const best = q.Q3 || q.Q2 || q.Q1 || "—"
-
           html += `
 <tr>
 <td class="pos-col">${q.position}</td>
-<td class="driver-col">${q.Driver.givenName} ${q.Driver.familyName}</td>
+<td class="driver-col">${q.Driver.familyName}</td>
 <td class="team-col">${q.Constructor.name}</td>
 <td class="time-col">${best}</td>
 </tr>
@@ -981,12 +1041,12 @@ async function openResultPage(round) {
 
       } else {
         document.getElementById("resultPageQualiTable").innerHTML =
-          "<p style='color:#aaa;padding:10px'>Qualifying data not available.</p>"
+          "<p style=\'color:#aaa;padding:10px\'>Qualifying data not available.</p>"
       }
 
     } else {
       document.getElementById("resultPageQualiTable").innerHTML =
-        "<p style='color:#ff4747;padding:10px'>⚠️ Qualifying result unavailable.</p>"
+        "<p style=\'color:#ff4747;padding:10px\'>⚠️ Qualifying result unavailable.</p>"
     }
 
     /* ── SPRINT RESULT (if available) ── */
@@ -998,6 +1058,9 @@ async function openResultPage(round) {
 
         document.getElementById("resultPageSprintCard").style.display = "block"
 
+        // Show Sprint tab button
+        document.getElementById("tabSprintBtn").style.display = "inline-block"
+
         const sResults = sprintRace.SprintResults
 
         let html = `
@@ -1007,22 +1070,21 @@ async function openResultPage(round) {
 <th class="pos-col">POS</th>
 <th class="driver-col">DRIVER</th>
 <th class="team-col">TEAM</th>
-<th class="time-col">TIME/GAP</th>
+<th class="time-col">GAP</th>
 <th class="points-col">PTS</th>
 </tr>
 </thead>
 <tbody>
 `
         sResults.forEach(s => {
-
           const gap = s.position === "1"
             ? (s.Time ? s.Time.time : "—")
-            : (s.Time ? "+" + s.Time.time : s.status || "—")
+            : (s.Time ? "+" + s.Time.time : shortStatus(s.status))
 
           html += `
 <tr>
 <td class="pos-col">${s.position}</td>
-<td class="driver-col">${s.Driver.givenName} ${s.Driver.familyName}</td>
+<td class="driver-col">${s.Driver.familyName}</td>
 <td class="team-col">${s.Constructor.name}</td>
 <td class="time-col">${gap}</td>
 <td class="points-col">${s.points}</td>
@@ -1034,7 +1096,6 @@ async function openResultPage(round) {
         document.getElementById("resultPageSprintTable").innerHTML = html
 
       }
-      // If no sprint data, card stays hidden — no error shown
 
     }
 
@@ -1042,6 +1103,27 @@ async function openResultPage(round) {
     document.getElementById("resultPageName").innerText = "Error"
     showError("resultPageRaceTable", err.message || "Failed to load result.")
   }
+
+}
+
+/* ──────────────────────────────────────────────────────────
+   TAB SWITCHER for Result Detail Page
+   Switches between Race / Qualifying / Sprint panels
+   ────────────────────────────────────────────────────────── */
+
+function showResultTab(tab) {
+
+  // Hide all panels
+  document.getElementById("resultTabRace").style.display = "none"
+  document.getElementById("resultTabQuali").style.display = "none"
+  document.getElementById("resultTabSprint").style.display = "none"
+
+  // Remove active from all tab buttons
+  document.querySelectorAll(".result-tab-btn").forEach(b => b.classList.remove("tab-active"))
+
+  // Show selected panel + activate button
+  document.getElementById("resultTab" + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = "block"
+  document.getElementById("tab" + tab.charAt(0).toUpperCase() + tab.slice(1) + "Btn").classList.add("tab-active")
 
 }
 
