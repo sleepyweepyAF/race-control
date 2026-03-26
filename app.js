@@ -166,46 +166,84 @@ function showPage(page) {
 
   setTimeout(() => {
     document.getElementById(page).classList.remove("hidden")
-    // Always scroll to top when switching pages
     window.scrollTo({ top: 0, behavior: "instant" })
   }, 50)
 
-  // When Calendar nav btn is tapped, always reset to the
-  // main calendar menu (hides any open calendar subpage)
   if (page === "calendar") {
-    setTimeout(() => {
-      showCalendarMenu()
-    }, 60)
+    setTimeout(() => showCalendarMenu(), 60)
   }
 
 }
 
-/* ──────────────────────────────────────────────────────────
-   CALENDAR SUBPAGE SYSTEM
-   showCalendarMenu()     — shows the 3 big buttons
-   showCalendarSub(id)    — shows a subpage, hides menu
-   showCalendarBack()     — returns to menu from subpage
-   ────────────────────────────────────────────────────────── */
+function setNav(page) {
+  document.querySelectorAll(".bottom-nav-btn").forEach(b => b.classList.remove("active"))
+  const btn = document.getElementById("nav-" + page)
+  if (btn) btn.classList.add("active")
+}
 
 function showCalendarMenu() {
-  document.getElementById("calendarMenu").style.display = "block"
-  document.getElementById("calendarSubNext").style.display = "none"
-  document.getElementById("calendarSubUpcoming").style.display = "none"
-  document.getElementById("calendarSubCancelled").style.display = "none"
+  const all = ["calendarMenu","calendarSubNext","calendarSubUpcoming","calendarSubCancelled"]
+  all.forEach(id => {
+    const el = document.getElementById(id)
+    if (el) el.style.display = id === "calendarMenu" ? "block" : "none"
+  })
 }
 
 function showCalendarSub(id) {
-  document.getElementById("calendarMenu").style.display = "none"
-  document.getElementById("calendarSubNext").style.display = "none"
-  document.getElementById("calendarSubUpcoming").style.display = "none"
-  document.getElementById("calendarSubCancelled").style.display = "none"
-  document.getElementById(id).style.display = "block"
+  const all = ["calendarMenu","calendarSubNext","calendarSubUpcoming","calendarSubCancelled"]
+  all.forEach(i => {
+    const el = document.getElementById(i)
+    if (el) el.style.display = i === id ? "block" : "none"
+  })
   window.scrollTo({ top: 0, behavior: "instant" })
 }
 
 function showCalendarBack() {
   showCalendarMenu()
   window.scrollTo({ top: 0, behavior: "instant" })
+}
+
+function goBackFromRacePage() {
+  const target = window._racePageBackTarget
+  if (!target) { showPage("calendar"); return }
+  if (target.type === "calendarSub") {
+    showPage("calendar")
+    setTimeout(() => showCalendarSub(target.id), 70)
+  } else if (target.type === "page") {
+    showPage(target.id)
+  }
+}
+
+function goBackFromResultPage() {
+  showPage("results")
+  loadResults()
+  setNav("results")
+}
+
+/* Team color map for accent bars in standings */
+function getTeamColor(name) {
+  const colors = {
+    "Mercedes":              "#00D2BE",
+    "Ferrari":               "#E8002D",
+    "Red Bull":              "#3671C6",
+    "Red Bull Racing":       "#3671C6",
+    "McLaren":               "#FF8000",
+    "Aston Martin":          "#358C75",
+    "Alpine":                "#FF87BC",
+    "Alpine F1 Team":        "#FF87BC",
+    "Williams":              "#64C4FF",
+    "Haas":                  "#B6BABD",
+    "Haas F1 Team":          "#B6BABD",
+    "RB":                    "#6692FF",
+    "RB F1 Team":            "#6692FF",
+    "Racing Bulls":          "#6692FF",
+    "Kick Sauber":           "#52E252",
+    "Sauber":                "#52E252",
+    "Audi":                  "#FF0000",
+    "Cadillac":              "#CC0000",
+    "Cadillac F1 Team":      "#CC0000"
+  }
+  return colors[name] || "#555"
 }
 
 function getFlag(code) {
@@ -523,10 +561,29 @@ function renderSessions(sessions) {
   sessions.forEach(s => {
 
     let date = new Date(s.date_start)
+    const isPast = date < new Date()
 
     let row = document.createElement("div")
-    row.innerText = s.session_name + " — " + formatIST(date)
+    row.className = "session-row" + (isPast ? " session-past" : "")
 
+    const dateStr = new Intl.DateTimeFormat("en-IN", {
+      timeZone: "Asia/Kolkata", day: "numeric", month: "short"
+    }).format(date)
+
+    const timeStr = new Intl.DateTimeFormat("en-IN", {
+      timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit", hour12: true
+    }).format(date)
+
+    row.innerHTML = `
+<div class="session-date-col">
+  <div class="session-date">${dateStr}</div>
+  <div class="session-time">${timeStr} IST</div>
+</div>
+<div class="session-name-col">
+  <div class="session-name">${s.session_name}</div>
+  ${isPast ? '<div class="session-done">COMPLETED</div>' : ''}
+</div>
+`
     container.appendChild(row)
 
     if (!nextSession && date > new Date()) {
@@ -558,10 +615,8 @@ function renderSessions(sessions) {
 
 async function openRacePage(race, start, end, isCancelled = false, backTarget = null) {
 
-  // Store where we came from so the back button can return there
   window._racePageBackTarget = backTarget
 
-  // Update back button label and visibility
   const backBar = document.getElementById("racePageBackBar")
   const backBtn = document.getElementById("racePageBackBtn")
   if (backBar && backBtn) {
@@ -580,24 +635,23 @@ async function openRacePage(race, start, end, isCancelled = false, backTarget = 
     ? getFlag(race.country_code)
     : getFlagByName(race.meeting_name)
 
-  // Show cancelled badge in title if applicable
   const cancelledBadge = isCancelled ? "🚫 " : ""
-  document.getElementById("racePageName").innerText = cancelledBadge + flag + " " + race.meeting_name
+
+  // Populate new race-detail-header
+  const raceDetailFlag = document.getElementById("raceDetailFlag")
+  if (raceDetailFlag) raceDetailFlag.innerText = flag
+
+  document.getElementById("racePageName").innerText = cancelledBadge + race.meeting_name
   document.getElementById("racePageCircuit").innerText = race.circuit_short_name
-  document.getElementById("racePageLocation").innerText =
-    race.location + ", " + race.country_name
-
+  document.getElementById("racePageLocation").innerText = race.location + ", " + race.country_name
   document.getElementById("racePageDates").innerText =
-
     start.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) +
     " – " +
     end.toLocaleDateString("en-IN", { day: "numeric", month: "short" })
 
   // Hide countdown card entirely for cancelled races
   const countdownCard = document.getElementById("racePageCountdownCard")
-  if (countdownCard) {
-    countdownCard.style.display = isCancelled ? "none" : "block"
-  }
+  if (countdownCard) countdownCard.style.display = isCancelled ? "none" : "block"
 
   try {
 
@@ -612,10 +666,29 @@ async function openRacePage(race, start, end, isCancelled = false, backTarget = 
     sessions.forEach(s => {
 
       let date = new Date(s.date_start)
+      const isPast = date < new Date()
 
       let row = document.createElement("div")
-      row.innerText = s.session_name + " — " + formatIST(date)
+      row.className = "session-row" + (isPast ? " session-past" : "")
 
+      const dateStr = new Intl.DateTimeFormat("en-IN", {
+        timeZone: "Asia/Kolkata", day: "numeric", month: "short"
+      }).format(date)
+
+      const timeStr = new Intl.DateTimeFormat("en-IN", {
+        timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit", hour12: true
+      }).format(date)
+
+      row.innerHTML = `
+<div class="session-date-col">
+  <div class="session-date">${dateStr}</div>
+  <div class="session-time">${timeStr} IST</div>
+</div>
+<div class="session-name-col">
+  <div class="session-name">${s.session_name}</div>
+  ${isPast ? '<div class="session-done">COMPLETED</div>' : ''}
+</div>
+`
       container.appendChild(row)
 
       if (s.session_name === "Race") {
@@ -624,6 +697,7 @@ async function openRacePage(race, start, end, isCancelled = false, backTarget = 
 
     })
 
+    // Only start countdown for non-cancelled races
     if (!isCancelled) {
       startRacePageCountdown()
     }
@@ -655,7 +729,7 @@ async function loadCalendar() {
 
   } catch (err) {
 
-    showError("calendarContent", err.message || "Failed to load calendar.")
+    showError("nextSubContent", err.message || "Failed to load calendar.")
 
   }
 
@@ -664,13 +738,14 @@ async function loadCalendar() {
 function renderCalendar(races) {
 
   const now = new Date()
-  const currentYear = new Date().getFullYear()
 
   let next = null
   let upcoming = []
   let cancelled = []
 
-  // Sort races into three buckets
+  // Split races into active and cancelled buckets
+  const currentYear = new Date().getFullYear()
+
   races.forEach(r => {
 
     let start = new Date(r.date_start)
@@ -678,6 +753,8 @@ function renderCalendar(races) {
     end.setDate(end.getDate() + 2)
 
     if (CANCELLED_RACES.includes(r.meeting_name)) {
+      // Only show cancelled races from the current year — avoids
+      // duplicate entries from previous seasons in the OpenF1 API
       if (start.getFullYear() === currentYear) {
         cancelled.push({ r, start, end })
       }
@@ -692,56 +769,29 @@ function renderCalendar(races) {
   })
 
   // ── Helper: build a standard race item ──
-  function makeRaceItem(r, start, end) {
-
+  function makeItem(r, start, end) {
     let item = document.createElement("div")
     item.className = "calendar-item"
-
-    item.innerHTML = `
-<div class="calendar-race">${getFlag(r.country_code)} ${r.meeting_name}</div>
-<div class="calendar-date">
-Race Weekend<br>
-${start.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-–
-${end.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-</div>
-`
-    item.onclick = () => openRacePage(r, start, end, false, { type: "calendarSub", id: "calendarSubNext", label: "Next Race" })
+    item.innerHTML = `<div class="cal-item-inner"><div class="cal-item-accent"></div><div class="cal-item-body"><div class="cal-item-round">${getFlag(r.country_code)}</div><div class="calendar-race">${r.meeting_name}</div><div class="calendar-date">${start.toLocaleDateString("en-IN", { day: "numeric", month: "short" })} – ${end.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</div></div></div>`
     return item
-
   }
 
-  // ── Helper: build a cancelled race item ──
+  // ── Helper: build a cancelled item ──
   function makeCancelledItem(r, start, end) {
-
     let item = document.createElement("div")
     item.className = "calendar-item calendar-item-cancelled"
-
-    const cancelledFlag = getFlag(r.country_code) !== "🏁"
-      ? getFlag(r.country_code)
-      : getFlagByName(r.meeting_name)
-
-    item.innerHTML = `
-<div class="calendar-race">🚫 ${cancelledFlag} ${r.meeting_name}</div>
-<div class="calendar-date cancelled-label">CANCELLED</div>
-<div class="calendar-date">
-Was scheduled:<br>
-${start.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-–
-${end.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-</div>
-`
-    item.onclick = () => openRacePage(r, start, end, true, { type: "calendarSub", id: "calendarSubCancelled", label: "Cancelled" })
+    const cf = getFlag(r.country_code) !== "🏁" ? getFlag(r.country_code) : getFlagByName(r.meeting_name)
+    item.innerHTML = `<div class="cal-item-inner"><div class="cal-item-accent" style="background:#ff4747"></div><div class="cal-item-body"><div class="cancelled-label">🚫 CANCELLED</div><div class="calendar-race">${cf} ${r.meeting_name}</div><div class="calendar-date">Was scheduled: ${start.toLocaleDateString("en-IN", { day: "numeric", month: "short" })} – ${end.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</div></div></div>`
     return item
-
   }
 
   // ── Populate NEXT RACE subpage ──
   const nextContainer = document.getElementById("nextSubContent")
   nextContainer.innerHTML = ""
-
   if (next) {
-    nextContainer.appendChild(makeRaceItem(next.r, next.start, next.end))
+    const item = makeItem(next.r, next.start, next.end)
+    item.onclick = () => openRacePage(next.r, next.start, next.end, false, { type: "calendarSub", id: "calendarSubNext", label: "Next Race" })
+    nextContainer.appendChild(item)
   } else {
     nextContainer.innerHTML = "<p style='color:#aaa;padding:10px'>No upcoming race found.</p>"
   }
@@ -749,20 +799,9 @@ ${end.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
   // ── Populate UPCOMING subpage ──
   const upcomingContainer = document.getElementById("upcomingSubContent")
   upcomingContainer.innerHTML = ""
-
   if (upcoming.length) {
     upcoming.forEach(x => {
-      let item = document.createElement("div")
-      item.className = "calendar-item"
-      item.innerHTML = `
-<div class="calendar-race">${getFlag(x.r.country_code)} ${x.r.meeting_name}</div>
-<div class="calendar-date">
-Race Weekend<br>
-${x.start.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-–
-${x.end.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-</div>
-`
+      const item = makeItem(x.r, x.start, x.end)
       item.onclick = () => openRacePage(x.r, x.start, x.end, false, { type: "calendarSub", id: "calendarSubUpcoming", label: "Upcoming" })
       upcomingContainer.appendChild(item)
     })
@@ -773,14 +812,16 @@ ${x.end.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
   // ── Populate CANCELLED subpage ──
   const cancelledContainer = document.getElementById("cancelledSubContent")
   cancelledContainer.innerHTML = ""
-
   if (cancelled.length) {
-    cancelled.forEach(x => cancelledContainer.appendChild(makeCancelledItem(x.r, x.start, x.end)))
+    cancelled.forEach(x => {
+      const item = makeCancelledItem(x.r, x.start, x.end)
+      item.onclick = () => openRacePage(x.r, x.start, x.end, true, { type: "calendarSub", id: "calendarSubCancelled", label: "Cancelled" })
+      cancelledContainer.appendChild(item)
+    })
   } else {
     cancelledContainer.innerHTML = "<p style='color:#aaa;padding:10px'>No cancelled races this season.</p>"
   }
 
-  // Show the main calendar menu by default
   showCalendarMenu()
 
 }
@@ -829,7 +870,6 @@ function renderDriverStandings(data) {
 <tr>
 <th class="pos-col">POS</th>
 <th class="driver-col">DRIVER</th>
-<th class="team-col">TEAM</th>
 <th class="points-col">PTS</th>
 </tr>
 </thead>
@@ -840,15 +880,22 @@ function renderDriverStandings(data) {
 
   standings.forEach((d, i) => {
 
-    html += `
+    const teamColor = getTeamColor(d.Constructors[0].name)
 
+    html += `
 <tr>
 <td class="pos-col">${i + 1}</td>
-<td class="driver-col">${d.Driver.givenName} ${d.Driver.familyName}</td>
-<td class="team-col">${d.Constructors[0].name}</td>
+<td class="driver-col">
+  <div class="driver-name-wrap">
+    <span class="team-accent-bar" style="background:${teamColor}"></span>
+    <div>
+      <div class="driver-fullname">${d.Driver.givenName} ${d.Driver.familyName}</div>
+      <div class="driver-team-sub">${d.Constructors[0].name}</div>
+    </div>
+  </div>
+</td>
 <td class="points-col">${d.points}</td>
 </tr>
-
 `
 
   })
@@ -913,14 +960,19 @@ function renderConstructorStandings(data) {
 
   standings.forEach((t, i) => {
 
-    html += `
+    const teamColor = getTeamColor(t.Constructor.name)
 
+    html += `
 <tr>
 <td class="pos-col">${i + 1}</td>
-<td class="team-col">${t.Constructor.name}</td>
+<td class="team-col">
+  <div class="team-name-wrap">
+    <span class="team-accent-bar" style="background:${teamColor}"></span>
+    ${t.Constructor.name}
+  </div>
+</td>
 <td class="points-col">${t.points}</td>
 </tr>
-
 `
 
   })
@@ -1085,7 +1137,7 @@ async function openResultPage(round) {
 
   showPage("resultPage")
 
-  // Show back button on result detail page
+  // Show back button
   const backBar = document.getElementById("resultPageBackBar")
   if (backBar) backBar.style.display = "flex"
 
@@ -1300,29 +1352,6 @@ function showResultTab(tab) {
   document.getElementById("resultTab" + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = "block"
   document.getElementById("tab" + tab.charAt(0).toUpperCase() + tab.slice(1) + "Btn").classList.add("tab-active")
 
-}
-
-/* ──────────────────────────────────────────────────────────
-   BACK NAVIGATION HELPERS
-   ────────────────────────────────────────────────────────── */
-
-function goBackFromRacePage() {
-  const target = window._racePageBackTarget
-  if (!target) {
-    showPage("calendar")
-    return
-  }
-  if (target.type === "calendarSub") {
-    showPage("calendar")
-    setTimeout(() => showCalendarSub(target.id), 70)
-  } else if (target.type === "page") {
-    showPage(target.id)
-  }
-}
-
-function goBackFromResultPage() {
-  showPage("results")
-  loadResults()
 }
 
 /* ──────────────────────────────────────────────────────────

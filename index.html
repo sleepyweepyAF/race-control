@@ -2,315 +2,246 @@
 <html>
 
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Race Control</title>
-
 <link rel="stylesheet" href="style.css">
-
 <link rel="manifest" href="manifest.json">
-
 <meta name="theme-color" content="#e10600">
-
 <link rel="apple-touch-icon" href="images/icon-192.png">
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
-<div class="container">
-
-<h1 class="title">🏎 Race Control</h1>
-
-<div class="nav">
-
-<button onclick="showPage('home')" class="nav-btn">Home</button>
-<button onclick="showPage('calendar')" class="nav-btn">Calendar</button>
-<button onclick="showPage('sessions')" class="nav-btn">Sessions</button>
-<button onclick="showPage('drivers')" class="nav-btn">Drivers</button>
-<button onclick="showPage('teams')" class="nav-btn">Teams</button>
-<button onclick="showPage('results');loadResults()" class="nav-btn">Results</button>
-
+<!-- TOP HEADER BAR -->
+<div class="top-bar">
+  <span class="top-bar-logo">RC</span>
+  <span class="top-bar-title">RACE CONTROL</span>
+  <span class="top-bar-season" id="topBarSeason">2026</span>
 </div>
+
+<!-- PAGE WRAPPER — all pages live here -->
+<div class="page-wrapper">
 
 <!-- HOME -->
-
 <div id="home" class="page">
 
-<div class="race-header">
+  <div class="page-heading">NEXT RACE</div>
 
-<div class="race-title">
-<span id="flag">🏁</span>
-<span id="raceName">Loading...</span>
-</div>
+  <div class="hero-card">
+    <div class="hero-flag" id="flag">🏁</div>
+    <div class="hero-race-name" id="raceName">Loading...</div>
+    <div class="hero-circuit" id="circuit"></div>
+    <div class="hero-location" id="location"></div>
+  </div>
 
-<p id="circuit" class="circuit"></p>
-<p id="location" class="location"></p>
+  <div class="info-row-card">
+    <div class="info-row">
+      <span class="info-label">STATUS</span>
+      <span class="info-value" id="raceStatus">Checking...</span>
+    </div>
+  </div>
 
-</div>
+  <div class="countdown-card">
+    <div class="countdown-label">RACE COUNTDOWN</div>
+    <div id="countdown" class="countdown-value">--</div>
+  </div>
 
-<div class="card">
-
-<h3>Race Status</h3>
-<p id="raceStatus">Checking race status...</p>
-
-</div>
-
-<div class="card">
-
-<h3>Race Countdown</h3>
-<div id="countdown">--</div>
-
-</div>
-
-<div class="card">
-
-<h3>Next Session</h3>
-<p id="nextSession">Loading...</p>
-
-</div>
+  <div class="info-row-card">
+    <div class="info-row">
+      <span class="info-label">NEXT SESSION</span>
+      <span class="info-value" id="nextSession">Loading...</span>
+    </div>
+  </div>
 
 </div>
 
 <!-- CALENDAR -->
-
 <div id="calendar" class="page hidden">
 
-<!-- CALENDAR MAIN MENU — 3 big buttons -->
-<div id="calendarMenu">
+  <div class="page-heading">CALENDAR</div>
 
-<div class="card">
-<h3>Season Calendar</h3>
-</div>
+  <!-- CALENDAR MAIN MENU -->
+  <div id="calendarMenu">
+    <div class="cal-menu-btn" onclick="showCalendarSub('calendarSubNext')">
+      <div class="cal-menu-icon">🏁</div>
+      <div class="cal-menu-label">Next Race Weekend</div>
+      <div class="cal-menu-arrow">›</div>
+    </div>
+    <div class="cal-menu-btn" onclick="showCalendarSub('calendarSubUpcoming')">
+      <div class="cal-menu-icon">📅</div>
+      <div class="cal-menu-label">Upcoming Race Weekends</div>
+      <div class="cal-menu-arrow">›</div>
+    </div>
+    <div class="cal-menu-btn cal-menu-btn-cancelled" onclick="showCalendarSub('calendarSubCancelled')">
+      <div class="cal-menu-icon">🚫</div>
+      <div class="cal-menu-label">Cancelled Race Weekends</div>
+      <div class="cal-menu-arrow">›</div>
+    </div>
+  </div>
 
-<div class="cal-menu-btn" onclick="showCalendarSub('calendarSubNext')">
-<div class="cal-menu-icon">🏁</div>
-<div class="cal-menu-label">Next Race Weekend</div>
-<div class="cal-menu-arrow">›</div>
-</div>
+  <!-- NEXT RACE SUBPAGE -->
+  <div id="calendarSubNext" style="display:none">
+    <div class="cal-back-bar">
+      <button class="cal-back-btn" onclick="showCalendarBack()">‹ Calendar</button>
+      <span class="cal-sub-title">Next Race Weekend</span>
+    </div>
+    <div id="nextSubContent"></div>
+  </div>
 
-<div class="cal-menu-btn" onclick="showCalendarSub('calendarSubUpcoming')">
-<div class="cal-menu-icon">📅</div>
-<div class="cal-menu-label">Upcoming Race Weekends</div>
-<div class="cal-menu-arrow">›</div>
-</div>
+  <!-- UPCOMING RACES SUBPAGE -->
+  <div id="calendarSubUpcoming" style="display:none">
+    <div class="cal-back-bar">
+      <button class="cal-back-btn" onclick="showCalendarBack()">‹ Calendar</button>
+      <span class="cal-sub-title">Upcoming Race Weekends</span>
+    </div>
+    <div id="upcomingSubContent"></div>
+  </div>
 
-<div class="cal-menu-btn cal-menu-btn-cancelled" onclick="showCalendarSub('calendarSubCancelled')">
-<div class="cal-menu-icon">🚫</div>
-<div class="cal-menu-label">Cancelled Race Weekends</div>
-<div class="cal-menu-arrow">›</div>
-</div>
-
-</div>
-
-<!-- NEXT RACE SUBPAGE -->
-<div id="calendarSubNext" style="display:none">
-
-<div class="cal-back-bar">
-<button class="cal-back-btn" onclick="showCalendarBack()">‹ Calendar</button>
-<span class="cal-sub-title">Next Race Weekend</span>
-</div>
-
-<div class="card">
-<div id="nextSubContent"></div>
-</div>
-
-</div>
-
-<!-- UPCOMING RACES SUBPAGE -->
-<div id="calendarSubUpcoming" style="display:none">
-
-<div class="cal-back-bar">
-<button class="cal-back-btn" onclick="showCalendarBack()">‹ Calendar</button>
-<span class="cal-sub-title">Upcoming Race Weekends</span>
-</div>
-
-<div class="card">
-<div id="upcomingSubContent"></div>
-</div>
-
-</div>
-
-<!-- CANCELLED RACES SUBPAGE -->
-<div id="calendarSubCancelled" style="display:none">
-
-<div class="cal-back-bar">
-<button class="cal-back-btn" onclick="showCalendarBack()">‹ Calendar</button>
-<span class="cal-sub-title">Cancelled Race Weekends</span>
-</div>
-
-<div class="card">
-<div id="cancelledSubContent"></div>
-</div>
-
-</div>
+  <!-- CANCELLED RACES SUBPAGE -->
+  <div id="calendarSubCancelled" style="display:none">
+    <div class="cal-back-bar">
+      <button class="cal-back-btn" onclick="showCalendarBack()">‹ Calendar</button>
+      <span class="cal-sub-title">Cancelled Race Weekends</span>
+    </div>
+    <div id="cancelledSubContent"></div>
+  </div>
 
 </div>
 
 <!-- SESSIONS -->
-
 <div id="sessions" class="page hidden">
-
-<div class="card">
-
-<h3>Race Weekend (IST)</h3>
-<div id="sessionsContent"></div>
-
-</div>
-
+  <div class="page-heading">SESSIONS</div>
+  <div class="card">
+    <h3>Race Weekend (IST)</h3>
+    <div id="sessionsContent"></div>
+  </div>
 </div>
 
 <!-- DRIVERS -->
-
 <div id="drivers" class="page hidden">
-
-<div class="card">
-
-<h3>Driver Standings</h3>
-<p>No drivers standings have been released as of now.</p>
-
-</div>
-
+  <div class="page-heading">DRIVERS</div>
+  <div class="card">
+    <h3>Driver Standings</h3>
+    <p>No driver standings have been released as of now.</p>
+  </div>
 </div>
 
 <!-- TEAMS -->
-
 <div id="teams" class="page hidden">
-
-<div class="card">
-
-<h3>Constructor Standings</h3>
-<p>No teams standings have been released as of now.</p>
-
-</div>
-
+  <div class="page-heading">TEAMS</div>
+  <div class="card">
+    <h3>Constructor Standings</h3>
+    <p>No constructor standings have been released as of now.</p>
+  </div>
 </div>
 
 <!-- RESULTS LIST PAGE -->
-
 <div id="results" class="page hidden">
-
-<div class="card">
-
-<h3>Race Results</h3>
-<div id="resultsContent"></div>
-
-</div>
-
+  <div class="page-heading">RESULTS</div>
+  <div class="card">
+    <h3>Race Results</h3>
+    <div id="resultsContent"></div>
+  </div>
 </div>
 
 <!-- RESULT DETAIL PAGE -->
-
 <div id="resultPage" class="page hidden">
-
-<div id="resultPageBackBar" class="cal-back-bar" style="display:none">
-<button class="cal-back-btn" onclick="goBackFromResultPage()">‹ Results</button>
-</div>
-
-<!-- Header card -->
-<div class="card">
-<h2 id="resultPageName"></h2>
-<p id="resultPageDate" style="color:#aaa;margin-top:4px"></p>
-</div>
-
-<!-- Fastest Lap -->
-<div class="card">
-<h3>Fastest Lap 🟣</h3>
-<p id="resultPageFastestLap">--</p>
-</div>
-
-<!-- Tab buttons -->
-<div class="result-tabs">
-<button id="tabRaceBtn" class="result-tab-btn tab-active" onclick="showResultTab('race')">Race</button>
-<button id="tabQualiBtn" class="result-tab-btn" onclick="showResultTab('quali')">Qualifying</button>
-<button id="tabSprintBtn" class="result-tab-btn" onclick="showResultTab('sprint')" style="display:none">Sprint</button>
-</div>
-
-<!-- Race tab panel -->
-<div id="resultTabRace" class="card">
-<h3>Race Result</h3>
-<div id="resultPageRaceTable"></div>
-</div>
-
-<!-- Qualifying tab panel -->
-<div id="resultTabQuali" class="card" style="display:none">
-<h3>Qualifying Result</h3>
-<div id="resultPageQualiTable"></div>
-</div>
-
-<!-- Sprint tab panel — hidden by default -->
-<div id="resultTabSprint" class="card" style="display:none">
-<div id="resultPageSprintCard" style="display:none">
-<h3>Sprint Result</h3>
-<div id="resultPageSprintTable"></div>
-</div>
-</div>
-
+  <div id="resultPageBackBar" class="cal-back-bar" style="display:none">
+    <button class="cal-back-btn" onclick="goBackFromResultPage()">‹ Results</button>
+  </div>
+  <div class="card">
+    <h2 id="resultPageName"></h2>
+    <p id="resultPageDate" style="color:#aaa;margin-top:4px"></p>
+  </div>
+  <div class="card">
+    <h3>Fastest Lap 🟣</h3>
+    <p id="resultPageFastestLap">--</p>
+  </div>
+  <div class="result-tabs">
+    <button id="tabRaceBtn" class="result-tab-btn tab-active" onclick="showResultTab('race')">Race</button>
+    <button id="tabQualiBtn" class="result-tab-btn" onclick="showResultTab('quali')">Qualifying</button>
+    <button id="tabSprintBtn" class="result-tab-btn" onclick="showResultTab('sprint')" style="display:none">Sprint</button>
+  </div>
+  <div id="resultTabRace" class="card">
+    <h3>Race Result</h3>
+    <div id="resultPageRaceTable"></div>
+  </div>
+  <div id="resultTabQuali" class="card" style="display:none">
+    <h3>Qualifying Result</h3>
+    <div id="resultPageQualiTable"></div>
+  </div>
+  <div id="resultTabSprint" class="card" style="display:none">
+    <div id="resultPageSprintCard" style="display:none">
+      <h3>Sprint Result</h3>
+      <div id="resultPageSprintTable"></div>
+    </div>
+  </div>
 </div>
 
 <!-- RACE PAGE -->
-
 <div id="racePage" class="page hidden">
-
-<div id="racePageBackBar" class="cal-back-bar" style="display:none">
-<button id="racePageBackBtn" class="cal-back-btn" onclick="goBackFromRacePage()">‹ Back</button>
+  <div id="racePageBackBar" class="cal-back-bar" style="display:none">
+    <button id="racePageBackBtn" class="cal-back-btn" onclick="goBackFromRacePage()">‹ Back</button>
+  </div>
+  <div class="race-detail-header">
+    <div class="race-detail-flag" id="raceDetailFlag"></div>
+    <div class="race-detail-name" id="racePageName"></div>
+    <div class="race-detail-meta">
+      <span id="racePageCircuit"></span> · <span id="racePageLocation"></span>
+    </div>
+    <div class="race-detail-dates" id="racePageDates"></div>
+  </div>
+  <div class="card" id="racePageCountdownCard">
+    <div class="countdown-label">RACE COUNTDOWN</div>
+    <div id="racePageCountdown" class="countdown-value">--</div>
+  </div>
+  <div class="card">
+    <h3>Sessions</h3>
+    <div id="racePageSessions"></div>
+  </div>
 </div>
 
-<div class="card">
+</div><!-- end page-wrapper -->
 
-<h2 id="racePageName"></h2>
-
-<p><strong>Circuit:</strong> <span id="racePageCircuit"></span></p>
-
-<p><strong>Location:</strong> <span id="racePageLocation"></span></p>
-
-<p><strong>Race Weekend:</strong></p>
-
-<p id="racePageDates"></p>
-
-</div>
-
-<div class="card" id="racePageCountdownCard">
-
-<h3>Race Countdown</h3>
-<div id="racePageCountdown">--</div>
-
-</div>
-
-<div class="card">
-
-<h3>Sessions</h3>
-<div id="racePageSessions"></div>
-
-</div>
-
-</div>
-
-</div>
+<!-- BOTTOM NAV BAR -->
+<nav class="bottom-nav">
+  <button class="bottom-nav-btn active" id="nav-home" onclick="setNav('home');showPage('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Home</span>
+  </button>
+  <button class="bottom-nav-btn" id="nav-calendar" onclick="setNav('calendar');showPage('calendar')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span>Calendar</span>
+  </button>
+  <button class="bottom-nav-btn" id="nav-results" onclick="setNav('results');showPage('results');loadResults()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span>Results</span>
+  </button>
+  <button class="bottom-nav-btn" id="nav-drivers" onclick="setNav('drivers');showPage('drivers')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span>Drivers</span>
+  </button>
+  <button class="bottom-nav-btn" id="nav-teams" onclick="setNav('teams');showPage('teams')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span>Teams</span>
+  </button>
+</nav>
 
 <script src="app.js"></script>
-
-<!-- ============================================================
-     FAIL-SAFE 12 — SERVICE WORKER REGISTRATION
-     Registers sw.js for true offline PWA support.
-     Only runs if the browser supports service workers.
-     ============================================================ -->
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js")
-      .then(reg => {
-        console.log("[Race Control] Service Worker registered:", reg.scope)
-      })
-      .catch(err => {
-        console.warn("[Race Control] Service Worker registration failed:", err)
-      })
+      .then(reg => console.log("[Race Control] SW registered:", reg.scope))
+      .catch(err => console.warn("[Race Control] SW failed:", err))
   })
 }
+// Update season year in top bar
+document.getElementById("topBarSeason").innerText = new Date().getFullYear()
 </script>
 
 </body>
-
 </html>
