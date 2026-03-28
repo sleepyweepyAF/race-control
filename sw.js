@@ -8,7 +8,7 @@
    ✔ Falls back to cache when network fails
    ============================================================ */
 
-const CACHE_NAME = "race-control-v2"
+const CACHE_NAME = "race-control-v1"
 
 /* App shell — all static assets to cache on install */
 const SHELL_ASSETS = [

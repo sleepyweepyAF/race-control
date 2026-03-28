@@ -19,23 +19,7 @@
 <div class="top-bar">
   <span class="top-bar-logo">RC</span>
   <span class="top-bar-title">RACE CONTROL</span>
-  <div id="liveIndicator" style="display:none" class="live-indicator">
-    <span class="live-dot"></span>
-    <span id="liveLabel" class="live-label">LIVE</span>
-  </div>
   <span class="top-bar-season" id="topBarSeason">2026</span>
-</div>
-
-<!-- PWA INSTALL BANNER -->
-<div id="installBanner" class="install-banner" style="display:none">
-  <div class="install-banner-text">
-    <div class="install-banner-title">Add to Home Screen</div>
-    <div class="install-banner-sub">Install Race Control for the full app experience</div>
-  </div>
-  <div class="install-banner-actions">
-    <button class="install-btn" onclick="installApp()">Install</button>
-    <button class="install-dismiss" onclick="dismissInstall()">✕</button>
-  </div>
 </div>
 
 <!-- PAGE WRAPPER — all pages live here -->
@@ -143,10 +127,6 @@
     <h3>Driver Standings</h3>
     <p>No driver standings have been released as of now.</p>
   </div>
-  <div class="card">
-    <h3>Points Progression</h3>
-    <div id="pointsChartContainer"><p style="color:#aaa;font-size:13px;text-align:center;padding:12px">Loading chart...</p></div>
-  </div>
 </div>
 
 <!-- TEAMS -->
@@ -221,16 +201,6 @@
   <div class="card">
     <h3>Sessions</h3>
     <div id="racePageSessions"></div>
-  </div>
-
-  <div class="card">
-    <h3>Circuit Info</h3>
-    <div id="circuitInfoContainer"><p style="color:#aaa;font-size:13px">Select a race to see circuit data.</p></div>
-  </div>
-
-  <div class="card">
-    <h3>Race Day Weather</h3>
-    <div id="weatherContainer"><p style="color:#aaa;font-size:13px">Select a race to see weather forecast.</p></div>
   </div>
 </div>
 
